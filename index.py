@@ -13,7 +13,7 @@ import uuid
 from datetime import datetime
 
 # Inicializa o Firebase Admin SDK
-cred = credentials.Certificate('./melowave-f6f7c-firebase-adminsdk-adwip-17bb3e5bb2.json')
+cred = credentials.Certificate('./melowave-f6f7c-firebase-adminsdk-adwip-dc53faec96.json')
 firebase_admin.initialize_app(cred, {'storageBucket': 'melowave-f6f7c.appspot.com'})
 
 app = Flask(__name__)
@@ -143,10 +143,6 @@ def download_and_analyze():
                 })
 
             image_data.sort(key=lambda x: x['height'])
-
-            print('----------------------------------------------------')
-            print(vars(yt))
-            print('----------------------------------------------------')
 
             music_data = {
                 "Audio": audio_url,
