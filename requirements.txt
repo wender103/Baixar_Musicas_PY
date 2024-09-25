@@ -6,3 +6,4 @@ Pillow
 requests
 firebase-admin
 colorgram.py
+python-dotenv

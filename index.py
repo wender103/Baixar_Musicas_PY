@@ -11,10 +11,17 @@ import firebase_admin
 from firebase_admin import credentials, storage, firestore
 import uuid
 from datetime import datetime
+from dotenv import load_dotenv
 
-# Inicializa o Firebase Admin SDK com o arquivo secreto do Render
-cred = credentials.Certificate('/etc/secrets/melowave-f6f7c-firebase-adminsdk-adwip-dc53faec96.json')
-firebase_admin.initialize_app(cred, {'storageBucket': 'melowave-f6f7c.appspot.com'})
+load_dotenv()
+
+firebase_key_path = os.getenv('FIREBASE_KEY_PATH')
+
+try:
+    cred = credentials.Certificate(firebase_key_path)
+    firebase_admin.initialize_app(cred, {'storageBucket': 'melowave-f6f7c.appspot.com'})
+except Exception as e:
+    print(f"Erro ao inicializar o Firebase: {e}")
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS"]}})
