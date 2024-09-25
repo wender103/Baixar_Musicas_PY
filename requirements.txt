@@ -1,0 +1,8 @@
+Flask
+flask-cors
+yt-dlp
+pytube
+Pillow
+requests
+firebase-admin
+colorgram.py
