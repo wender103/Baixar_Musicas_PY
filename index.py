@@ -12,8 +12,8 @@ from firebase_admin import credentials, storage, firestore
 import uuid
 from datetime import datetime
 
-# Inicializa o Firebase Admin SDK
-cred = credentials.Certificate('./melowave-f6f7c-firebase-adminsdk-adwip-dc53faec96.json')
+# Inicializa o Firebase Admin SDK com o arquivo secreto do Render
+cred = credentials.Certificate('/etc/secrets/melowave-f6f7c-firebase-adminsdk-adwip-dc53faec96.json')
 firebase_admin.initialize_app(cred, {'storageBucket': 'melowave-f6f7c.appspot.com'})
 
 app = Flask(__name__)
