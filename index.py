@@ -31,6 +31,7 @@ try:
         "universe_domain": os.getenv("FIREBASE_UNIVERSE_DOMAIN")  # Adicionado
     })
     firebase_admin.initialize_app(cred, {'storageBucket': 'melowave-f6f7c.appspot.com'})
+    print("Firebase inicializado com sucesso.")
 except Exception as e:
     print(f"Erro ao inicializar o Firebase: {e}")
 
@@ -62,6 +63,7 @@ def rgb_to_hex(r, g, b):
     return "#{:02x}{:02x}{:02x}".format(r, g, b)
 
 def upload_to_firebase(image, folder_name, file_name):
+    print(f"Uploading image to Firebase: {file_name}")
     bucket = storage.bucket()
     blob = bucket.blob(f'MusicasPostadas/{folder_name}/{file_name}')
     buffer = BytesIO()
@@ -69,9 +71,12 @@ def upload_to_firebase(image, folder_name, file_name):
     buffer.seek(0)
     blob.upload_from_file(buffer, content_type='image/jpeg')
     blob.make_public()
-    return blob.public_url
+    url = blob.public_url
+    print(f"Image uploaded successfully. URL: {url}")
+    return url
 
 def update_music_data(data, document_id):
+    print(f"Updating music data for document: {document_id}")
     db = firestore.client()
     music_ref = db.collection('Musicas').document(document_id)
     doc = music_ref.get()
@@ -80,10 +85,13 @@ def update_music_data(data, document_id):
         music_list = existing_data.get('Musicas', [])
         music_list.append(data)
         music_ref.update({'Musicas': music_list})
+        print("Music data updated successfully.")
     else:
+        print("Documento não encontrado!")
         return jsonify({'error': 'Documento não encontrado!'}), 404
 
 def download_audio(video_url):
+    print(f"Starting download for: {video_url}")
     ydl_opts = {
         'format': 'bestaudio/best',
         'outtmpl': '%(title)s.%(ext)s',
@@ -93,33 +101,42 @@ def download_audio(video_url):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
             info = ydl.extract_info(video_url, download=True)
-            return ydl.prepare_filename(info)
+            file_name = ydl.prepare_filename(info)
+            print(f"Audio downloaded successfully: {file_name}")
+            return file_name
         except Exception as e:
             print(f"Erro ao baixar o áudio: {e}")
             raise
 
 @app.route('/download', methods=['POST'])
 def download_and_analyze():
+    print("Received request on /download")
     data = request.json
     video_url = data.get('VideoURL')
     email_user = data.get('Email_User')
 
     if not video_url:
+        print("URL da música não fornecida.")
         return jsonify({'error': 'URL da música é necessária!'}), 400
 
     try:
         folder_id = str(uuid.uuid4())
-        
-        # Use a função download_audio
+        print(f"Generating folder ID: {folder_id}")
+
+        # Usando a função para baixar o áudio
         audio_file_name = download_audio(video_url)
+        
+        print(f"Audio file name after download: {audio_file_name}")
 
         bucket = storage.bucket()
         audio_blob = bucket.blob(f'MusicasPostadas/{folder_id}/{os.path.basename(audio_file_name)}')
         audio_blob.upload_from_filename(audio_file_name)
         audio_blob.make_public()
         audio_url = audio_blob.public_url
+        print(f"Audio uploaded to Firebase. URL: {audio_url}")
 
         os.remove(audio_file_name)
+        print(f"Audio file {audio_file_name} removed from local storage.")
 
         yt = YouTube(video_url)
         video_id = yt.video_id
@@ -137,11 +154,13 @@ def download_and_analyze():
         response = requests.get(url)
         
         if response.status_code == 200:
+            print(f"Image URL fetched successfully: {url}")
             image = Image.open(BytesIO(response.content))
             extracted_colors = extract_colors(image)
 
             image_data = []
             for size_label, size in sizes.items():
+                print(f"Processing image size: {size_label}")
                 resized_image = resize_image(image, size)
                 file_name = f'{size_label}_{video_id}_{str(uuid.uuid4())}.jpg'
                 public_url = upload_to_firebase(resized_image, folder_id, file_name)
@@ -171,14 +190,17 @@ def download_and_analyze():
                 "Views": yt.views or 0
             }
 
+            print(f"Music data to update: {music_data}")
             update_music_data(music_data, 'tcvn9MjRhwR8DtTTvLzc')
 
             return jsonify(music_data), 200
 
         else:
+            print(f"Erro ao baixar a imagem do YouTube. Status code: {response.status_code}")
             return jsonify({"error": "Erro ao baixar a imagem do YouTube!"}), 500
 
     except Exception as e:
+        print(f"Erro ao processar a requisição: {e}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
