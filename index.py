@@ -83,6 +83,21 @@ def update_music_data(data, document_id):
     else:
         return jsonify({'error': 'Documento não encontrado!'}), 404
 
+def download_audio(video_url):
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': '%(title)s.%(ext)s',
+        'cookiefile': 'cookies.txt',  # Adiciona a opção de cookies
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        try:
+            info = ydl.extract_info(video_url, download=True)
+            return ydl.prepare_filename(info)
+        except Exception as e:
+            print(f"Erro ao baixar o áudio: {e}")
+            raise
+
 @app.route('/download', methods=['POST'])
 def download_and_analyze():
     data = request.json
@@ -94,14 +109,9 @@ def download_and_analyze():
 
     try:
         folder_id = str(uuid.uuid4())
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'outtmpl': '%(title)s.%(ext)s',
-        }
-
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(video_url, download=True)
-            audio_file_name = ydl.prepare_filename(info)
+        
+        # Use a função download_audio
+        audio_file_name = download_audio(video_url)
 
         bucket = storage.bucket()
         audio_blob = bucket.blob(f'MusicasPostadas/{folder_id}/{os.path.basename(audio_file_name)}')
