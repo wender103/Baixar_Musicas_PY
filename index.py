@@ -15,11 +15,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-firebase_key_path = os.getenv('FIREBASE_KEY_PATH')
-
 try:
-    cred = credentials.Certificate(firebase_key_path)
-    firebase_admin.initialize_app(cred, {'storageBucket': 'melowave-f6f7c.appspot.com'})
+    cred = credentials.Certificate('./botdc-e412e-firebase-adminsdk-creot-6d58120d5e.json')
+    firebase_admin.initialize_app(cred, {'storageBucket': 'botdc-e412e.appspot.com'})
 except Exception as e:
     print(f"Erro ao inicializar o Firebase: {e}")
 
